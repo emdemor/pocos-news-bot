@@ -1,0 +1,24 @@
+FROM jupyter/minimal-notebook
+
+WORKDIR /project
+
+COPY ./notebooks /project/notebooks
+COPY ./src /project/src
+COPY ./pyproject.toml /project/pyproject.toml
+COPY ./README.md /project/README.md
+COPY ./LICENSE.txt /project/LICENSE.txt
+COPY ./docker/pyodbc.sh /project/pyodbc.sh
+
+USER root
+
+RUN pip install .
+
+RUN bash /project/pyodbc.sh
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=on
+
+EXPOSE 8888
+
+VOLUME /project
+
+CMD ["start-notebook.sh", "--NotebookApp.token=''", "--NotebookApp.password=''", "--NotebookApp.default_url='/lab/tree'", "--notebook-dir=/project/notebooks"]

@@ -1,0 +1,40 @@
+version: "3.5"
+services:
+  # application:
+  #   build:
+  #     context: .
+  #     dockerfile: ./Dockerfile
+  #   image: application
+  #   container_name: application
+  #   volumes:
+  #     - ./:/app/
+  #   networks:
+  #     - net
+
+  chroma-server:
+    image: chromadb/chroma
+    volumes:
+      - ../database/chroma:/chroma/chroma/
+    ports:
+      - 8000:8000
+    networks:
+      - net
+      
+  jupyter:
+    image: bot_jupyter
+    ports:
+      - 8888:8888
+    networks:
+      - net
+    volumes:
+      - ../notebooks:/project/notebooks
+    env_file:
+      - ../.env
+
+volumes:
+  index_data:
+    driver: local
+
+networks:
+  net:
+    driver: bridge
