@@ -1,0 +1,15 @@
+cookie:
+  expiry_days: 0
+  key: news_bot_key
+  name: news_bot
+credentials:
+  usernames:
+    admin:
+      email: admin@gmail.com
+      name: John Smith
+      password: $2b$12$ERox8mPAr6.snl2qL6xIHOdP5fn7te552fk0omZ6EFq2tjM6FB4eu
+    carol-cruz:
+      email: carolmoraescruz@gmail.com
+      name: Caroline Moraes da Cruz
+      password: $2b$12$aq11JhyuCLWpxsqpZ5gW.uYoB7raEbU6/muXAcLiUbuIvGIo0zlay
+preauthorized: null
