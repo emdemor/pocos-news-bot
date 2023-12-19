@@ -26,11 +26,13 @@ def front():
     switch_page("login")
 
 def run():
+    
     path = os.path.join(
-        "/".join(os.path.abspath(ui.__file__).split("/")[:-1]),
+        os.sep.join(os.path.abspath(ui.__file__).split(os.sep)[:-1]),
         "__init__.py",
     )
 
+    print("PATH", path)
 
     if runtime.exists():
         front()
