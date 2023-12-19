@@ -7,9 +7,12 @@ import ui
 
 app = typer.Typer()
 
+front_app = typer.Typer()
+app.add_typer(front_app, name="frontend")
 
-@app.command()
-def frontend():
+
+@front_app.command()
+def start():
     ui.run()
 
 
