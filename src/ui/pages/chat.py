@@ -3,7 +3,7 @@ import streamlit as st
 import uuid
 
 sys.path.append(os.getcwd())
-from ui.src.components import (
+from ui.components import (
     check_user_login,
     display_session_history,
     initiate_session_state,

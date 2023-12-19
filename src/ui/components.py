@@ -117,7 +117,7 @@ def load_users() -> stauth.Authenticate:
         Authenticator with users info.
     """
 
-    with open('ui/users/config.yaml') as file:
+    with open(os.environ['USERS_STORAGE']) as file:
         config = yaml.load(file, Loader=SafeLoader)
 
     authenticator = stauth.Authenticate(
@@ -221,7 +221,7 @@ def set_background(file_name: str):
     """
 
     file_ext = "png"
-    file_path = f"ui/imgs/{file_name}.png"
+    file_path = f"{os.environ['ICON_FILE_PATH']}/{file_name}.png"
         
     st.markdown(
          f"""

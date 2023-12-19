@@ -12,4 +12,8 @@ credentials:
       email: carolmoraescruz@gmail.com
       name: Caroline Moraes da Cruz
       password: $2b$12$aq11JhyuCLWpxsqpZ5gW.uYoB7raEbU6/muXAcLiUbuIvGIo0zlay
+    emdemor:
+      email: emdemor415@gmail.com
+      name: Eduardo
+      password: $2b$12$EEjDmIL.Ng.OdV0PnJttfeAwFFkKQnNySll.vPGdwX88e5rdMws6G
 preauthorized: null

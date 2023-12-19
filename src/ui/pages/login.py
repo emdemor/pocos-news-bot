@@ -3,7 +3,7 @@ import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 
 sys.path.append(os.getcwd())
-from ui.src.components import load_users, page_config
+from ui.components import load_users, page_config
 
 page_config(sidebar="collapsed")
 
