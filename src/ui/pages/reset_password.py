@@ -7,7 +7,7 @@ from yaml.loader import SafeLoader
 from time import sleep
 
 sys.path.append(os.getcwd())
-from ui.src.components import check_user_login, page_config
+from ui.components import check_user_login, page_config
 
 page_config(sidebar="collapsed")
 check_user_login()
@@ -18,7 +18,7 @@ def reset_password() -> None:
     Reset the password for a logged user.
     """
 
-    with open('ui/users/config.yaml') as file:
+    with open(os.environ['USERS_STORAGE']) as file:
         config = yaml.load(file, Loader=SafeLoader)
 
     authenticator = stauth.Authenticate(
@@ -32,7 +32,7 @@ def reset_password() -> None:
     if st.session_state["authentication_status"]:
         try:
             if authenticator.reset_password(st.session_state["username"], 'Alterar senha'):
-                with open('ui/users/config.yaml', 'w') as file:
+                with open(os.environ['USERS_STORAGE'], 'w') as file:
                     yaml.dump(config, file, default_flow_style=False)
                 st.success('Senha modificada com sucesso.')
                 with st.spinner("Aguarde..."):
