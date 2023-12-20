@@ -30,6 +30,15 @@ services:
       - ../notebooks:/project/notebooks
     env_file:
       - ../.env
+      
+  front:
+    image: bot_front
+    ports:
+      - 8501:8501
+    networks:
+      - net
+    env_file:
+      - ../.env
 
 volumes:
   index_data:

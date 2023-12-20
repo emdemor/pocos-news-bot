@@ -6,13 +6,16 @@ PROJECT_NAME := bot
 
 CHROMA_IMAGE := $(PROJECT_NAME)_chroma
 JUPYTER_IMAGE := $(PROJECT_NAME)_jupyter
+FRONT_IMAGE := $(PROJECT_NAME)_front
 
 DOCKER_COMPOSE_FILEPATH := docker/docker-compose.yml
 CHROMA_DOCKERFILE_PATH := docker/Dockerfile.chroma
 JUPYTER_DOCKERFILE_PATH := docker/Dockerfile.jupyter
+FRONT_DOCKERFILE_PATH := docker/Dockerfile.frontend
 
 CHROMA_PORT ?= 8000
 JUPYTER_PORT ?= 8888
+FRONT_PORT ?= 8501
 
 DOCKER_RUN := docker run --rm -t
 DOCKER_RUN_ITERACTIVE := $(DOCKER_RUN) -i
@@ -22,6 +25,7 @@ DOCKER_COMPOSE := docker-compose -f $(DOCKER_COMPOSE_FILEPATH)
 RUNNING_CONTAINERS = $(docker ps -a -q)
 
 RUN_JUPYTER := $(DOCKER_RUN) $(DOCKER_ENV) -p $(JUPYTER_PORT):$(JUPYTER_PORT) $(JUPYTER_IMAGE)
+RUN_FRONT := $(DOCKER_RUN) $(DOCKER_ENV) -p $(FRONT_PORT):$(FRONT_PORT) $(FRONT_IMAGE)
 
 up:
 	$(DOCKER_COMPOSE) up --build
@@ -37,3 +41,12 @@ run-jupyter:
 
 shell-jupyter:
 	$(DOCKER_RUN_ITERACTIVE) $(DOCKER_ENV) -p $(JUPYTER_PORT):$(JUPYTER_PORT) $(JUPYTER_IMAGE) /bin/bash
+
+build-front:
+	docker build -f $(FRONT_DOCKERFILE_PATH) -t $(FRONT_IMAGE) .
+	
+front:
+	$(RUN_FRONT)
+
+shell-front:
+	$(DOCKER_RUN_ITERACTIVE) $(DOCKER_ENV) -p $(FRONT_PORT):$(FRONT_PORT) $(FRONT_IMAGE) /bin/bash
