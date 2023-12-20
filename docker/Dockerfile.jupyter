@@ -11,9 +11,12 @@ COPY ./docker/pyodbc.sh /project/pyodbc.sh
 
 USER root
 
+RUN bash /project/pyodbc.sh
+
 RUN pip install .
 
-RUN bash /project/pyodbc.sh
+RUN python -c "from langchain.embeddings import HuggingFaceEmbeddings; embeddings = HuggingFaceEmbeddings(model_name='clips/mfaq')"
+
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=on
 
