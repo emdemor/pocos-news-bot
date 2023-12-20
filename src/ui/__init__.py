@@ -12,10 +12,7 @@ from ui.components import page_config, set_background, hide_navigation_sidebar
 
 def front():
     
-    st.set_page_config(
-        page_title="Bot News",
-        initial_sidebar_state="collapsed",
-    )
+    page_config(layout="centered", sidebar="collapsed")
 
     hide_navigation_sidebar()
 
@@ -27,18 +24,16 @@ def front():
 
 def run():
     
+    # pegando o endereço do arquivo que será passado pra streamlit
     path = os.path.join(
         os.sep.join(os.path.abspath(ui.__file__).split(os.sep)[:-1]),
         "__init__.py",
     )
 
-    print("PATH", path)
-
     if runtime.exists():
         front()
     
     else:
-        print(path)
         sys.argv = ["streamlit", "run", path]
         sys.exit(stcli.main())
 
