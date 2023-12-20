@@ -27,6 +27,8 @@ RUNNING_CONTAINERS = $(docker ps -a -q)
 RUN_JUPYTER := $(DOCKER_RUN) $(DOCKER_ENV) -p $(JUPYTER_PORT):$(JUPYTER_PORT) $(JUPYTER_IMAGE)
 RUN_FRONT := $(DOCKER_RUN) $(DOCKER_ENV) -p $(FRONT_PORT):$(FRONT_PORT) $(FRONT_IMAGE)
 
+build: build-jupyter build-front
+
 up:
 	$(DOCKER_COMPOSE) up --build
 
