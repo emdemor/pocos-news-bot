@@ -1,0 +1,5 @@
+{
+    "_type": "prompt",
+    "input_variables": ["history", "human_input"],
+    "template": "Voce vai receber uma pergunta de follow up do usuario, que pode nao ter muitos detalhes.\nO usuario quer realizar consultas na base de dados que contem noticias de Pocos de Caldas e regiao.\nReescreva a frase do HUMAN INPUT para que ela possa ser considerada uma pergunta independente.\nConsidere o CHAT HISTORY para manter o contexto.\nNão responda ao usuário. Apenas reescreva a pergunta dele.\nSua resposta deve conter apenas a pergunta reescrita.\n\n## CHAT HISTORY\n{history}\n\n## HUMAN INPUT\n{human_input}\n\nIA:"
+}
