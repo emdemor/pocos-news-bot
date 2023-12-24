@@ -13,17 +13,21 @@ from langchain.llms import OpenAI
 from langchain.prompts import load_prompt
 from loguru import logger
 import tiktoken
+from bot import BotConfig
+
+
+_config = BotConfig()
 
 
 class NewsBot():
 
     def __init__(self):
 
-        self.llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
-        self.llm_chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, model_kwargs={"stop": ["HUMAN_INPUT", "IA:"]})
+        self.llm = ChatOpenAI(model_name=_config.LLM_MODEL_NAME, temperature=0)
+        self.llm_chat = ChatOpenAI(model_name=_config.LLM_MODEL_NAME, temperature=0, model_kwargs={"stop": ["HUMAN_INPUT", "IA:"]})
 
-        self.embeddings = HuggingFaceEmbeddings(model_name="clips/mfaq")
-        self.embedder = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="clips/mfaq")
+        self.embeddings = HuggingFaceEmbeddings(model_name=_config.HUGGINGFACE_EMBEDDING_MODEL_NAME)
+        self.embedder = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=_config.HUGGINGFACE_EMBEDDING_MODEL_NAME)
 
         self.verbose_chains = True
         
@@ -39,10 +43,10 @@ class NewsBot():
 
     def get_chroma_collection(self):
 
-        host_name = "chroma-server"
-        port = 8000
-        collection_name = 'pocos-news-embedding'
-        persist_directory = "chroma_db"
+        host_name = _config.VECTORDATABASE_HOSTNAME
+        port = _config.VECTORDATABASE_PORT
+        collection_name = _config.EMBEDDING_COLLECTION
+        persist_directory = _config.VECTORDATABASE_PERSIST_DIRECTORY
         
         settings = Settings(allow_reset=True, anonymized_telemetry=True, persist_directory=persist_directory)
         chroma_client = chromadb.HttpClient(host=host_name, port = port, settings=settings)
@@ -81,7 +85,7 @@ class NewsBot():
         )
     
     def count_tokens(self, context: str) -> int:
-        encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+        encoding = tiktoken.encoding_for_model(_config.LLM_MODEL_NAME)
         num_tokens = len(encoding.encode(context))
         
         return num_tokens
