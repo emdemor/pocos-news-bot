@@ -1,23 +1,27 @@
 FROM jupyter/minimal-notebook
 
 WORKDIR /project
+ENV PIP_DISABLE_PIP_VERSION_CHECK=on
 
-COPY ./notebooks /project/notebooks
+USER root
+
+# Install pyodbc
+COPY ./docker/pyodbc.sh /project/pyodbc.sh
+RUN bash /project/pyodbc.sh
+
+# Download huggingface models
+RUN pip install sentence-transformers==2.2.2
+RUN python -c "from langchain.embeddings import HuggingFaceEmbeddings; embeddings = HuggingFaceEmbeddings(model_name='clips/mfaq')"
+
+# Installing aplication
 COPY ./src /project/src
 COPY ./pyproject.toml /project/pyproject.toml
 COPY ./README.md /project/README.md
 COPY ./LICENSE.txt /project/LICENSE.txt
-COPY ./docker/pyodbc.sh /project/pyodbc.sh
-
-USER root
-
-RUN bash /project/pyodbc.sh
-
 RUN pip install .
 
-RUN python -c "from langchain.embeddings import HuggingFaceEmbeddings; embeddings = HuggingFaceEmbeddings(model_name='clips/mfaq')"
-
-ENV PIP_DISABLE_PIP_VERSION_CHECK=on
+# Getting notebooks
+COPY ./notebooks /project/notebooks
 
 RUN chmod +777 -R /home/jovyan
 
