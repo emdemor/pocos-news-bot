@@ -36,6 +36,7 @@ dependencies = [
   "tiktoken==0.5.2",
   "dvc==3.36.1",
   "dvc-gdrive==3.0.0",
+  "pydantic-settings==2.1.0",
 ]
 
 [project.optional-dependencies]
