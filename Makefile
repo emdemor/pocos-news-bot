@@ -52,3 +52,11 @@ front:
 
 shell-front:
 	$(DOCKER_RUN_ITERACTIVE) $(DOCKER_ENV) -p $(FRONT_PORT):$(FRONT_PORT) $(FRONT_IMAGE) /bin/bash
+
+update-vdb:
+	dvc add database
+	git add database.dvc .gitignore
+	git commit -m "update database"
+
+load-vdb:
+	dvc pull
