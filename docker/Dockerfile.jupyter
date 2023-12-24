@@ -16,7 +16,7 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 # Installing aplication
 COPY ./src /project/src
 COPY ./pyproject.toml /project/pyproject.toml
-COPY ./README.md /project/README.md
+COPY ./README.md /project/README.md 
 COPY ./LICENSE.txt /project/LICENSE.txt
 RUN pip install .
 
