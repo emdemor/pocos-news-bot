@@ -11,7 +11,7 @@ RUN bash /project/pyodbc.sh
 
 # Download huggingface models
 RUN pip install sentence-transformers==2.2.2
-RUN python -c "from langchain.embeddings import HuggingFaceEmbeddings; embeddings = HuggingFaceEmbeddings(model_name='clips/mfaq')"
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('clips/mfaq');"
 
 # Installing aplication
 COPY ./src /project/src

@@ -28,6 +28,7 @@ services:
       - net
     volumes:
       - ../notebooks:/project/notebooks
+      - ../models:/home/jovyan/.cache/torch/sentence_transformers
     env_file:
       - ../.env
       
