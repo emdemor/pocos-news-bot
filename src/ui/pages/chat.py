@@ -2,6 +2,9 @@ import os, sys
 import streamlit as st
 import uuid
 
+from bot import NewsBot
+from loguru import logger
+
 sys.path.append(os.getcwd())
 from ui.components import (
     check_user_login,
@@ -15,10 +18,12 @@ page_config()
 check_user_login()
 
 
-def chat():
+
+def chat(news_bot: NewsBot):
     
     filters = sidebar()
     initiate_session_state(filters)
+    session = st.session_state["session_id"]
 
     st.title("Chatbot de Notícias - Poços de Caldas")
 
@@ -29,7 +34,9 @@ def chat():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        response = {"response": f"Echo: {prompt}", "execution_id": uuid.uuid4().hex}
+        with st.spinner("..."):
+           response = news_bot.execute(prompt)
+
         with st.chat_message("assistant"):
             st.markdown(response["response"])
         st.session_state["messages"].append(
@@ -53,4 +60,6 @@ def chat():
 
 
 if __name__ == "__main__":
-    chat()
+    logger.info("Instance of chatbot")
+    # news_bot = NewsBot()
+    # chat(news_bot)
