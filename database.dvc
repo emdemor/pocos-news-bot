@@ -2,6 +2,21 @@ outs:
 - hash: md5
   path: database
   files:
+  - relpath: chroma/1dd9d4de-3a32-4974-a5f7-2ee39ae08c8a/data_level0.bin
+    md5: 2ee954d6ca90b4f7e802070f7963007a
+    size: 38544000
+  - relpath: chroma/1dd9d4de-3a32-4974-a5f7-2ee39ae08c8a/header.bin
+    md5: f6b25f5716b77fd271911aa14b86c28e
+    size: 100
+  - relpath: chroma/1dd9d4de-3a32-4974-a5f7-2ee39ae08c8a/index_metadata.pickle
+    md5: 8c980263393d697c8d5bfe417ab5ae2b
+    size: 694385
+  - relpath: chroma/1dd9d4de-3a32-4974-a5f7-2ee39ae08c8a/length.bin
+    md5: 5453a495f12d5aef5c1b3caed10165fb
+    size: 48000
+  - relpath: chroma/1dd9d4de-3a32-4974-a5f7-2ee39ae08c8a/link_lists.bin
+    md5: 6f2d6e2c7a20da48c920086ba6d3a23a
+    size: 101924
   - relpath: chroma/89b12ed9-54a1-4a2d-9d20-ef2f2e061664/data_level0.bin
     md5: 7b6439d84374639c8e6b68ef4106f3f8
   - relpath: chroma/89b12ed9-54a1-4a2d-9d20-ef2f2e061664/header.bin
@@ -22,8 +37,24 @@ outs:
     md5: ab5ba0127ec40228be3800f3c5e5f702
   - relpath: chroma/a3191e9e-5e2e-4a85-ac2f-5f7157afc3ae/link_lists.bin
     md5: b39dd4f21eb16684d538a04f9cc5a3cd
+  - relpath: chroma/b7fb66f7-1ccd-409f-b573-c16ca5196440/data_level0.bin
+    md5: 0c6dbd1a49f3c0ddf00fe1ff35e6162e
+    size: 38544000
+  - relpath: chroma/b7fb66f7-1ccd-409f-b573-c16ca5196440/header.bin
+    md5: 5bbf82059c0b7765cee8a56d7bbdb24c
+    size: 100
+  - relpath: chroma/b7fb66f7-1ccd-409f-b573-c16ca5196440/index_metadata.pickle
+    md5: 198007db1ec3e2c7be36d5d147115544
+    size: 694385
+  - relpath: chroma/b7fb66f7-1ccd-409f-b573-c16ca5196440/length.bin
+    md5: 7391aa41319e14a587d776b59e122e21
+    size: 48000
+  - relpath: chroma/b7fb66f7-1ccd-409f-b573-c16ca5196440/link_lists.bin
+    md5: d61821cdbf3c17268a36ffaa34dbac55
+    size: 101924
   - relpath: chroma/chroma.sqlite3
-    md5: 96c790ba9566e2e955b73270761785c2
+    md5: a49f203c3e08571a5ea3bdb2c1f27d3f
+    size: 897032192
   - relpath: chroma/dad1ed7d-3618-488f-9adb-4bec170869c0/data_level0.bin
     md5: aa9cbdc75de95e1bcb2b49005b161da4
   - relpath: chroma/dad1ed7d-3618-488f-9adb-4bec170869c0/header.bin
