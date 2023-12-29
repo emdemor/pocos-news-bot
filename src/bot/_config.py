@@ -11,4 +11,3 @@ class BotConfig(BaseSettings):
     @property
     def EMBEDDING_COLLECTION(self) -> str:
         return self.HUGGINGFACE_EMBEDDING_MODEL_NAME.replace("/", "-")
-

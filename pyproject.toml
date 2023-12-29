@@ -35,6 +35,9 @@ test = [
 version = {attr = "bot.__version__"}
 dependencies = {file = ["requirements.txt"]}
 
+[tool.setuptools.package-data]
+"bot.prompts" = ["*.json"]
+
 [project.scripts]
 bot = "bot.__main__:app"
 

@@ -61,5 +61,6 @@ def chat(news_bot: NewsBot):
 
 if __name__ == "__main__":
     logger.info("Instance of chatbot")
-    # news_bot = NewsBot()
-    # chat(news_bot)
+    news_bot = NewsBot()
+    logger.info("Starting chat")
+    chat(news_bot)

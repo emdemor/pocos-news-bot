@@ -1,5 +1,6 @@
 import os
 import ast
+from importlib import resources
 
 import chromadb
 from chromadb.config import Settings
@@ -19,6 +20,13 @@ from bot import BotConfig
 _config = BotConfig()
 
 
+def get_prompt(key):
+    filepath = str(
+        resources.files("bot.prompts").joinpath(f"{key}.json")
+    )
+
+    return load_prompt(filepath)
+
 class NewsBot():
 
     def __init__(self):
@@ -32,12 +40,12 @@ class NewsBot():
         self.verbose_chains = True
         
         # Load utilitary prompts and chains
-        self.prompt_intention = load_prompt("prompts/prompt_user_intention.json")
-        self.prompt_standalone_question = load_prompt("prompts/prompt_standalone_question.json")
+        self.prompt_intention = get_prompt("prompt_user_intention")
+        self.prompt_standalone_question = get_prompt("prompt_standalone_question")
         
         # Load chat prompts and chains
-        self.prompt_greeting = load_prompt("prompts/prompt_greeting.json")
-        self.prompt_query = load_prompt("prompts/prompt_query.json")
+        self.prompt_greeting = get_prompt("prompt_greeting")
+        self.prompt_query = get_prompt("prompt_query")
 
         self.collection = self.get_chroma_collection()
 
