@@ -1,6 +1,9 @@
 import os
 import ast
+import re
+import json
 from importlib import resources
+from uuid import uuid4
 
 import chromadb
 from chromadb.config import Settings
@@ -161,10 +164,17 @@ class NewsBot():
 
         context = self.get_content(query=message)
 
-        response = self.chain_query.predict(history=kwargs["history"], human_input=message, context=context)
-        resp_dict = ast.literal_eval(response)
+        for i in range(3):
+            response = self.chain_query.predict(history=kwargs["history"], human_input=message, context=context)
+            resp_dict = extract_dict_from_string(response)
+            if len(resp_dict) > 0:
+                return f'{resp_dict["resposta"]}\n\nNotícia: {resp_dict["link"]}'
+            continue
+            
+        return response
 
-        return f'{resp_dict["resposta"]}\n\nNotícia: {resp_dict["link"]}'
+
+        
 
     def handler_fallback(self, *args, **kwargs) -> str:
 
@@ -211,4 +221,30 @@ class NewsBot():
 
         logger.info(f">>> Resposta: {response}")
         
-        return response
+        return dict(response=response, execution_id=uuid4().hex)
+
+
+
+def extract_dict_from_string(string):
+    """
+    Extrai um elemento JSON de uma string.
+
+    Args:
+    string: A string que contém o elemento JSON.
+
+    Returns:
+    O elemento JSON como um dicionário Python, ou None se não for possível extrair.
+    """
+
+    match = re.search(r"{([^}]+)}", string)
+    if match is None:
+        return dict()
+
+    json_content = match.group(1)
+
+    try:
+        json_dict = json.loads("{" + json_content + "}")
+        return json_dict
+    except json.JSONDecodeError as err:
+        logger.error(str(err))
+        return dict()
