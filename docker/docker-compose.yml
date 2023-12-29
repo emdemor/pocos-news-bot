@@ -38,6 +38,8 @@ services:
       - 8501:8501
     networks:
       - net
+    volumes:
+      - ../models:/root/.cache/torch/sentence_transformers
     env_file:
       - ../.env
 
