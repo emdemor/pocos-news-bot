@@ -52,6 +52,16 @@ class NewsBot():
 
         self.collection = self.get_chroma_collection()
 
+        self.memory = ConversationSummaryBufferMemory(
+            llm=OpenAI(temperature=0),
+            chat_history=ChatMessageHistory(),
+            return_messages=True,
+            memory_key="chat_history",
+            input_key="human_input",
+            human_prefix="Human",
+            ai_prefix="AI"
+        )
+
     def get_chroma_collection(self):
 
         host_name = _config.VECTORDATABASE_HOSTNAME
@@ -168,7 +178,13 @@ class NewsBot():
             response = self.chain_query.predict(history=kwargs["history"], human_input=message, context=context)
             resp_dict = extract_dict_from_string(response)
             if len(resp_dict) > 0:
-                return f'{resp_dict["resposta"]}\n\nNotícia: {resp_dict["link"]}'
+                return (
+                    f'resposta: {resp_dict["resposta"]}\n\n'
+                    f'link_noticia: {resp_dict["link"]}\n\n'
+                    f'data_noticia: {resp_dict["data"]}\n\n'
+                    f'titulo_noticia: {resp_dict["titulo"]}\n\n'
+                    f'autor_noticia: {resp_dict["autor"]}\n\n'
+                )
             continue
             
         return response
@@ -184,17 +200,7 @@ class NewsBot():
         )
 
     def execute(self, message: str):
-
-        memory = ConversationSummaryBufferMemory(
-            llm=OpenAI(temperature=0),
-            chat_history=ChatMessageHistory(),
-            return_messages=True,
-            memory_key="chat_history",
-            input_key="human_input",
-            human_prefix="Human",
-            ai_prefix="AI"
-        )
-        chat_history = "".join(self.format_history_message(memory.chat_memory.messages))
+        chat_history = "".join(self.format_history_message(self.memory.chat_memory.messages))
         
         standalone_question = self.get_standalone_question(message=message, history=chat_history)
         logger.debug(f"Pergunta original: {message}")
@@ -214,7 +220,7 @@ class NewsBot():
             if category in intention.lower().replace("ú", "u").replace("í", "i"):
                 response = handler(
                     message=message,
-                    memory=memory,
+                    memory=self.memory,
                     history=chat_history
                 )
                 break
