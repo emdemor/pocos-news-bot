@@ -9,16 +9,16 @@ USER root
 COPY ./docker/pyodbc.sh /project/pyodbc.sh
 RUN bash /project/pyodbc.sh
 
-# Download huggingface models
-RUN pip install sentence-transformers==2.2.2
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('clips/mfaq');"
+# Instaling dependencies
+COPY ./requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Installing aplication
 COPY ./src /project/src
 COPY ./pyproject.toml /project/pyproject.toml
-COPY ./README.md /project/README.md
+COPY ./README.md /project/README.md 
 COPY ./LICENSE.txt /project/LICENSE.txt
-RUN pip install .
+RUN pip install . --no-deps
 
 # Getting notebooks
 COPY ./notebooks /project/notebooks

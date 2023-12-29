@@ -4,9 +4,14 @@ WORKDIR /app
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=on
 
+# Instaling dependencies
+COPY ./requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Installing aplication
 COPY ./src ./src
 COPY ./pyproject.toml ./
-RUN pip install .
+RUN pip install . --no-deps
 
 EXPOSE 8501
 
