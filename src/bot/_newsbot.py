@@ -98,10 +98,10 @@ class NewsBot():
     
     def _set_local_context(self, content, meta):
         return (
-            f"<data>{meta['date']}</data>\n"
-            f"<titulo>{meta['title']}</titulo>\n"
-            f"<autor>{meta['author']}</autor>\n"
-            f"<link>{meta['link']}</link>\n"
+            f"<data>{meta.get('date', '')}</data>\n"
+            f"<titulo>{meta.get('title', '')}</titulo>\n"
+            f"<autor>{meta.get('author', '')}</autor>\n"
+            f"<link>{meta.get('link', '')}</link>\n"
             f"<conteudo>{content}</conteudo>\n"
         )
     
@@ -148,7 +148,7 @@ class NewsBot():
             llm=self.llm, prompt=self.prompt_standalone_question, verbose=self.verbose_chains
         )
 
-        return self.chain_standalone_question.predict(history=kwargs["history"], human_input=message)
+        return self.chain_standalone_question.predict(history=kwargs.get("history", ""), human_input=message)
     
     def get_user_intention(self, message: str, *args, **kwargs) -> str:
 
@@ -156,35 +156,31 @@ class NewsBot():
             llm=self.llm, prompt=self.prompt_intention, verbose=self.verbose_chains
         )
 
-        return self.chain_intention.predict(history=kwargs["history"], human_input=message)
+        return self.chain_intention.predict(history=kwargs.get("history", ""), human_input=message)
     
     def handler_start_conversation(self, message: str, *args, **kwargs) -> str:
 
         self.chain_greeting = LLMChain(
-            llm=self.llm_chat, prompt=self.prompt_greeting, verbose=self.verbose_chains, memory=kwargs["memory"]
+            llm=self.llm_chat, prompt=self.prompt_greeting, verbose=self.verbose_chains, memory=kwargs.get("memory", "")
         )
 
-        return self.chain_greeting.predict(history=kwargs["history"], human_input=message)
+        return self.chain_greeting.predict(history=kwargs.get("history", ""), human_input=message)
 
     def handler_query(self, message: str, *args, **kwargs) -> str:
 
         self.chain_query = LLMChain(
-            llm=self.llm_chat, prompt=self.prompt_query, verbose=self.verbose_chains, memory=kwargs["memory"]
+            llm=self.llm_chat, prompt=self.prompt_query, verbose=self.verbose_chains, memory=kwargs.get("memory", "")
         )
 
         context = self.get_content(query=message)
 
         for i in range(3):
-            response = self.chain_query.predict(history=kwargs["history"], human_input=message, context=context)
+            response = self.chain_query.predict(history=kwargs.get("history", ""), human_input=message, context=context)
             resp_dict = extract_dict_from_string(response)
             if len(resp_dict) > 0:
-                return (
-                    f'resposta: {resp_dict["resposta"]}\n\n'
-                    f'link_noticia: {resp_dict["link"]}\n\n'
-                    f'data_noticia: {resp_dict["data"]}\n\n'
-                    f'titulo_noticia: {resp_dict["titulo"]}\n\n'
-                    f'autor_noticia: {resp_dict["autor"]}\n\n'
-                )
+                _resposta = f'{resp_dict.get("resposta", "")}'
+                _link = f'\n\nlink da noticia: {resp_dict.get("link", "")}' if resp_dict.get("link", None) else ""
+                return _resposta + _link
             continue
             
         return response
