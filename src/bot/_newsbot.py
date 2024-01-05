@@ -178,13 +178,9 @@ class NewsBot():
             response = self.chain_query.predict(history=kwargs.get("history", ""), human_input=message, context=context)
             resp_dict = extract_dict_from_string(response)
             if len(resp_dict) > 0:
-                return (
-                    f'resposta: {resp_dict.get("resposta", "")}\n\n'
-                    f'link_noticia: {resp_dict.get("link", "")}\n\n'
-                    f'data_noticia: {resp_dict.get("data", "")}\n\n'
-                    f'titulo_noticia: {resp_dict.get("titulo", "")}\n\n'
-                    f'autor_noticia: {resp_dict.get("autor", "")}\n\n'
-                )
+                _resposta = f'{resp_dict.get("resposta", "")}'
+                _link = f'\n\nlink da noticia: {resp_dict.get("link", "")}' if resp_dict.get("link", None) else ""
+                return _resposta + _link
             continue
             
         return response
