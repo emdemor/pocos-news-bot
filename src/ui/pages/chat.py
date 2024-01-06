@@ -14,16 +14,8 @@ from ui.components import (
     sidebar,
 )
 
-page_config()
-check_user_login()
-
-
 
 def chat(news_bot: NewsBot):
-    
-    filters = sidebar()
-    initiate_session_state(filters)
-    session = st.session_state["session_id"]
 
     st.title("Chatbot de Notícias - Poços de Caldas")
 
@@ -57,10 +49,21 @@ def chat(news_bot: NewsBot):
         )
 
         st.rerun()
+    
+    # logger.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + str(news_bot.local_memory._get_local_memory()))
+
+    
 
 
 if __name__ == "__main__":
-    logger.info("Instance of chatbot")
-    news_bot = NewsBot()
-    logger.info("Starting chat")
+
+    page_config()
+    check_user_login()
+    filters = sidebar()
+    initiate_session_state(filters)
+
+    news_bot = NewsBot(
+        local_filepath=f"{st.session_state['username']}_{st.session_state['session_id']}.json"
+    )
+
     chat(news_bot)
