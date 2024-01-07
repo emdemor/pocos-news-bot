@@ -1,39 +1,46 @@
 from abc import ABC, abstractmethod
-from altair import Literal
 
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 
-from bot import BotConfig
+from bot.vector_databases import VectorDB, VectorDBCollection, get_collection
 
 
-COLLECTION_TYPES = chromadb.api.models.Collection.Collection
-VECTOR_DATABASES_TYPES = Literal["chroma"]
+class ChromaCollection(VectorDBCollection):
+    
+    def get_most_similar(
+        self, query: str, n_neighbors: int = 1000, n_results: int = 10, **kwargs
+    ):
+        res = self.collection.query(
+            query_texts=query,
+            n_results=n_neighbors,
+            **kwargs
+            # where={"metadata_field": "is_equal_to_this"},
+            # where_document={"$contains":"search_string"}
+        )
 
+        return dict(
+            [
+                self._process_documents(key, value, n_results)
+                for key, value in res.items()
+            ]
+        )
 
-def get_collection(vector_database: VECTOR_DATABASES_TYPES):
-    _vdbs_mapping = {
-        "chroma": ChromaVectorDB,
-    }
+    @property
+    def vector_database(self):
+        return ChromaVectorDB()
 
-    if vector_database not in _vdbs_mapping:
-        raise VectorDatabaseNotRecognizedError(f"VDB '{vector_database}' not recognized.")
+    @property
+    def collection(self):
+        return self.vector_database.start()
 
-    return _vdbs_mapping[vector_database]().start()
-
-
-class VectorDB(ABC):
-    def __init__(self):
-        self.bot_config = BotConfig()
-
-    @abstractmethod
-    def start(self) -> COLLECTION_TYPES:
-        pass
-
-    @abstractmethod
-    def _set_embedder(self):
-        pass
+    def _process_documents(key, value, k):
+        limit_list = lambda x: x[:k] if isinstance(x, list) else x
+        processed_value = (
+            [limit_list(x) for x in value] if isinstance(value, list) else None
+        )
+        return key, processed_value
 
 
 class ChromaVectorDB(VectorDB):
@@ -63,7 +70,3 @@ class ChromaVectorDB(VectorDB):
             port=self.bot_config.VECTORDATABASE_PORT,
             settings=_settings,
         )
-
-
-class VectorDatabaseNotRecognizedError(Exception):
-    pass
