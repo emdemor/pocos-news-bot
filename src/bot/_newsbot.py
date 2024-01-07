@@ -23,6 +23,9 @@ from bot._local_memory import LocalMemory
 
 _config = BotConfig()
 
+LLM_CONTEXT_WINDOW_SIZE = 4096
+PROMPT_MAX_TOKENS = 3200
+
 
 def get_prompt(key):
     filepath = str(resources.files("bot.prompts").joinpath(f"{key}.json"))
@@ -48,7 +51,7 @@ class NewsBot:
             model_name=_config.HUGGINGFACE_EMBEDDING_MODEL_NAME
         )
 
-        self.verbose_chains = False
+        self.verbose_chains = True
 
         # Load utilitary prompts and chains
         self.prompt_intention = get_prompt("prompt_user_intention")
@@ -139,8 +142,8 @@ class NewsBot:
             for content, meta in zip(documents, metadata)
         ]
 
-        tokens = 4000
-        max_tokens = 3600
+        tokens = LLM_CONTEXT_WINDOW_SIZE
+        max_tokens = PROMPT_MAX_TOKENS
         while tokens > max_tokens:
             tokens = self.count_tokens("\n".join(context_list))
             if tokens >= max_tokens:
@@ -168,7 +171,7 @@ class NewsBot:
             elif isinstance(message, langchain_core.messages.ai.AIMessage):
                 yield f"{ai_prefix}: {message.content}\n"
 
-    def get_standalone_question(self, message: str, *args, **kwargs) -> str:
+    def get_standalone_question(self, message: str, history: str, *args, **kwargs) -> str:
         self.chain_standalone_question = LLMChain(
             llm=self.llm,
             prompt=self.prompt_standalone_question,
@@ -176,27 +179,19 @@ class NewsBot:
         )
 
         result = self.chain_standalone_question.predict(
-            history=self.memory, human_input=message
+            history=history, human_input=message
         )
 
         return result
 
-    def get_user_intention(self, message: str, *args, **kwargs) -> str:
+    def get_user_intention(self, message: str, history: str, *args, **kwargs) -> str:
         self.chain_intention = LLMChain(
             llm=self.llm, prompt=self.prompt_intention, verbose=self.verbose_chains
         )
 
-        return self.chain_intention.predict(
-            history=self.memory, human_input=message
-        )
+        return self.chain_intention.predict(history=history, human_input=message)
 
-    def handler_start_conversation(self, message: str, *args, **kwargs) -> str:
-
-        logger.error(10 * "\n")
-        logger.error("# handler_start_conversation -> ANTES")
-        logger.error(str(self.memory))
-        logger.error(10 * "\n")
-
+    def handler_start_conversation(self, message: str, history: str, *args, **kwargs) -> str:
         self.chain_greeting = LLMChain(
             llm=self.llm_chat,
             prompt=self.prompt_greeting,
@@ -204,25 +199,12 @@ class NewsBot:
             memory=self.memory,
         )
 
-        result = self.chain_greeting.predict(
-            history=self.memory, human_input=message
-        )
-
-        logger.error(10 * "\n")
-        logger.error("# handler_start_conversation -> DEPOIS")
-        logger.error(str(self.memory))
-        logger.error(10 * "\n")
+        result = self.chain_greeting.predict(history=history, human_input=message)
 
         self.local_memory.update(message_history=self.memory.chat_memory)
         return result
 
-    def handler_query(self, message: str, *args, **kwargs) -> str:
-
-        logger.error(10 * "\n")
-        logger.error("# handler_query -> ANTES")
-        logger.error(str(self.memory))
-        logger.error(10 * "\n")
-
+    def handler_query(self, message: str, history: str, *args, **kwargs) -> str:
         self.chain_query = LLMChain(
             llm=self.llm_chat,
             prompt=self.prompt_query,
@@ -234,7 +216,7 @@ class NewsBot:
 
         for i in range(3):
             response = self.chain_query.predict(
-                history=self.memory, human_input=message, context=context
+                history=history, human_input=message, context=context
             )
             self.local_memory.update(message_history=self.memory.chat_memory)
             resp_dict = extract_dict_from_string(response)
@@ -248,11 +230,6 @@ class NewsBot:
                 return _resposta + _link
             continue
 
-        logger.error(10 * "\n")
-        logger.error("# handler_query -> DEPOIS")
-        logger.error(str(self.memory))
-        logger.error(10 * "\n")
-
         return response
 
     def handler_fallback(self, *args, **kwargs) -> str:
@@ -265,11 +242,6 @@ class NewsBot:
         chat_history = "".join(
             self.format_history_message(self.memory.chat_memory.messages)
         )
-
-        logger.error(10 * "\n")
-        logger.error("CHAT HISTORY")
-        logger.error(chat_history)
-        logger.error(10 * "\n")
 
         standalone_question = self.get_standalone_question(
             message=message, history=chat_history
@@ -297,11 +269,6 @@ class NewsBot:
                 break
 
         self.local_memory.update(message_history=self.memory.chat_memory)
-
-        logger.error(10 * "\n")
-        logger.error("CHAT HISTORY")
-        logger.error(chat_history)
-        logger.error(10 * "\n")
 
         return dict(response=response, execution_id=uuid4().hex)
 
