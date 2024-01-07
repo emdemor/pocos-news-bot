@@ -7,6 +7,8 @@ class BotConfig(BaseSettings):
     VECTORDATABASE_HOSTNAME: str = "chroma-server"
     VECTORDATABASE_PORT: int = 8000
     VECTORDATABASE_PERSIST_DIRECTORY: str = "chroma_db"
+    HUMAN_PREFIX: str = "Human"
+    AI_PREFIX: str = "AI"
 
     @property
     def EMBEDDING_COLLECTION(self) -> str:
