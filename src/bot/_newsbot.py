@@ -29,7 +29,6 @@ PROMPT_MAX_TOKENS = 3200
 
 def get_prompt(key):
     filepath = str(resources.files("bot.prompts").joinpath(f"{key}.json"))
-
     return load_prompt(filepath)
 
 
