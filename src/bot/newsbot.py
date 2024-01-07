@@ -18,7 +18,7 @@ from langchain.prompts import load_prompt
 from loguru import logger
 import tiktoken
 from bot import BotConfig
-from bot._local_memory import LocalMemory
+from bot.local_memory import LocalMemory
 
 
 _config = BotConfig()
