@@ -1,14 +1,17 @@
-from abc import ABC, abstractmethod
-
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 
-from bot.vector_databases import VectorDB, VectorDBCollection, get_collection
+from bot.vector_databases.base import VectorDB
+from bot.data_models import News, VectorDatabaseNewsResult
 
 
-class ChromaCollection(VectorDBCollection):
-    
+class ChromaVectorDB(VectorDB):
+    def __init__(self):
+        super().__init__()
+        self.chroma_client = self._set_client()
+        self.embedder = self._set_embedder()
+
     def get_most_similar(
         self, query: str, n_neighbors: int = 1000, n_results: int = 10, **kwargs
     ):
@@ -20,36 +23,25 @@ class ChromaCollection(VectorDBCollection):
             # where_document={"$contains":"search_string"}
         )
 
-        return dict(
+        result = dict(
             [
                 self._process_documents(key, value, n_results)
                 for key, value in res.items()
             ]
         )
 
-    @property
-    def vector_database(self):
-        return ChromaVectorDB()
+        return [
+            self._format_search_result(*args)
+            for args in zip(
+                result["ids"][0],
+                result["distances"][0],
+                result["documents"][0],
+                result["metadatas"][0],
+            )
+        ]
 
     @property
-    def collection(self):
-        return self.vector_database.start()
-
-    def _process_documents(key, value, k):
-        limit_list = lambda x: x[:k] if isinstance(x, list) else x
-        processed_value = (
-            [limit_list(x) for x in value] if isinstance(value, list) else None
-        )
-        return key, processed_value
-
-
-class ChromaVectorDB(VectorDB):
-    def __init__(self):
-        super().__init__()
-        self.chroma_client = self._set_client()
-        self.embedder = self._set_embedder()
-
-    def start(self) -> chromadb.api.models.Collection.Collection:
+    def collection(self) -> chromadb.api.models.Collection.Collection:
         return self.chroma_client.get_collection(
             self.bot_config.EMBEDDING_COLLECTION, embedding_function=self.embedder
         )
@@ -70,3 +62,19 @@ class ChromaVectorDB(VectorDB):
             port=self.bot_config.VECTORDATABASE_PORT,
             settings=_settings,
         )
+
+    @staticmethod
+    def _format_search_result(*args):
+        id, d, doc, meta = args
+        if isinstance(meta.get("categories", ""), str):
+            meta["categories"] = meta.get("categories", "").split("|")
+        news = News(**dict([("id", id), ("document", doc)] + list(meta.items())))
+        return VectorDatabaseNewsResult(distance=d, news=news)
+
+    @staticmethod
+    def _process_documents(key, value, k):
+        limit_list = lambda x: x[:k] if isinstance(x, list) else x
+        processed_value = (
+            [limit_list(x) for x in value] if isinstance(value, list) else None
+        )
+        return key, processed_value
