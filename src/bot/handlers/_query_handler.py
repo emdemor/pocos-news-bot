@@ -1,29 +1,32 @@
-from typing import Optional
-from langchain.chat_models import ChatOpenAI
 from langchain.memory.chat_memory import BaseChatMemory
-from bot.handlers import PrivateHandler
+from langchain.chat_models import ChatOpenAI
+
+from bot.handlers import PublicHandler
 from bot.vector_databases.base import VectorDB
 
 
-class IntentionHandler(PrivateHandler):
-    _prompt_key: str = "prompt_user_intention"
+class QueryHandler(PublicHandler):
+    _prompt_key: str = "prompt_query"
     _use_chat_history: bool = True
-    _use_context: bool = False
-    _llm_context_window_size: Optional[int] = None
-    _prompt_max_tokens: Optional[int] = None
-    _vector_database: Optional[VectorDB] = None
+    _use_context: bool = True
 
     def __init__(
         self,
         llm_model: str,
         memory: BaseChatMemory,
+        vector_database: VectorDB,
         temperature: float = 0,
         verbose: bool = True,
+        llm_context_window_size: int = 4096,
+        prompt_max_tokens: int = 3200,
     ):
         self._llm_model = llm_model
         self._memory = memory
         self._temperature = temperature
         self._verbose = verbose
+        self._vector_database = vector_database
+        self._llm_context_window_size = llm_context_window_size
+        self._prompt_max_tokens = prompt_max_tokens
 
     @property
     def temperature(self):

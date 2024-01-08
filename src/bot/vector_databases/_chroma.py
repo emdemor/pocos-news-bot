@@ -1,3 +1,4 @@
+from typing import List
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
@@ -14,7 +15,7 @@ class ChromaVectorDB(VectorDB):
 
     def get_most_similar(
         self, query: str, n_neighbors: int = 1000, n_results: int = 10, **kwargs
-    ):
+    ) -> List[VectorDatabaseNewsResult]:
         res = self.collection.query(
             query_texts=query,
             n_results=n_neighbors,
@@ -64,7 +65,7 @@ class ChromaVectorDB(VectorDB):
         )
 
     @staticmethod
-    def _format_search_result(*args):
+    def _format_search_result(*args) -> VectorDatabaseNewsResult:
         id, d, doc, meta = args
         if isinstance(meta.get("categories", ""), str):
             meta["categories"] = meta.get("categories", "").split("|")
@@ -72,7 +73,7 @@ class ChromaVectorDB(VectorDB):
         return VectorDatabaseNewsResult(distance=d, news=news)
 
     @staticmethod
-    def _process_documents(key, value, k):
+    def _process_documents(key, value, k) -> tuple:
         limit_list = lambda x: x[:k] if isinstance(x, list) else x
         processed_value = (
             [limit_list(x) for x in value] if isinstance(value, list) else None
