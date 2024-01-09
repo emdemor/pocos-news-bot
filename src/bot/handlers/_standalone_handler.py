@@ -6,6 +6,11 @@ from bot.vector_databases.base import VectorDB
 
 
 class StandaloneHandler(PrivateHandler):
+    """
+    A class representing a standalone handler for processing standalone questions.
+    Inherits from PrivateHandler.
+    """
+
     _prompt_key: str = "prompt_standalone_question"
     _use_chat_history: bool = True
     _use_context: bool = False
