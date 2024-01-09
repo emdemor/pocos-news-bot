@@ -1,66 +1,39 @@
-import os
-import ast
-import re
-import json
-from importlib import resources
 from uuid import uuid4
 
-import chromadb
-from chromadb.config import Settings
-from chromadb.utils import embedding_functions
-import langchain_core
-from langchain.chains import LLMChain
-from langchain.chat_models import ChatOpenAI
-from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.memory import ConversationSummaryBufferMemory, ChatMessageHistory
 from langchain.llms import OpenAI
-from langchain.prompts import load_prompt
 from loguru import logger
-import tiktoken
+
 from bot import BotConfig
-from bot.local_memory import LocalMemory
+from bot.vector_databases import get_vector_database
+from bot.handlers import (
+    StandaloneHandler,
+    QueryHandler,
+    IntentionHandler,
+    GreetingHandler,
+    FallbackHandler,
+)
 
 
-_config = BotConfig()
-
-LLM_CONTEXT_WINDOW_SIZE = 4096
-PROMPT_MAX_TOKENS = 3200
-
-
-def get_prompt(key):
-    filepath = str(resources.files("bot.prompts").joinpath(f"{key}.json"))
-    return load_prompt(filepath)
+config = BotConfig()
 
 
 class NewsBot:
-    def __init__(self, local_filepath: str):
-        self.local_filepath = local_filepath
 
-        self.llm = ChatOpenAI(model_name=_config.LLM_MODEL_NAME, temperature=0)
-        self.llm_chat = ChatOpenAI(
-            model_name=_config.LLM_MODEL_NAME,
-            temperature=0,
-            model_kwargs={"stop": ["HUMAN_INPUT", "IA:"]},
-        )
+    """
+    A class representing a News Bot for handling user queries and interactions.
+    """
 
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name=_config.HUGGINGFACE_EMBEDDING_MODEL_NAME
-        )
-        self.embedder = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name=_config.HUGGINGFACE_EMBEDDING_MODEL_NAME
-        )
+    def __init__(self, verbose: bool = True):
+        """
+        Initialize the NewsBot.
 
-        self.verbose_chains = True
+        Args:
+            verbose (bool): Whether to enable verbose mode.
+        """
+        self.verbose = verbose
 
-        # Load utilitary prompts and chains
-        self.prompt_intention = get_prompt("prompt_user_intention")
-        self.prompt_standalone_question = get_prompt("prompt_standalone_question")
-
-        # Load chat prompts and chains
-        self.prompt_greeting = get_prompt("prompt_greeting")
-        self.prompt_query = get_prompt("prompt_query")
-
-        self.collection = self.get_chroma_collection()
+        self.vdb = get_vector_database("chroma")
 
         self.memory = ConversationSummaryBufferMemory(
             llm=OpenAI(temperature=0),
@@ -68,230 +41,57 @@ class NewsBot:
             return_messages=True,
             memory_key="chat_history",
             input_key="human_input",
-            human_prefix="Human",
-            ai_prefix="AI",
+            human_prefix=config.HUMAN_PREFIX,
+            ai_prefix=config.AI_PREFIX,
         )
 
-        self.local_memory = LocalMemory(
-            self.local_filepath, message_history=self.memory.chat_memory
+        self.standalone_handler = StandaloneHandler(
+            llm_model=config.LLM_MODEL_NAME, memory=self.memory, verbose=verbose
         )
-
-        self.memory.chat_memory = self.local_memory.message_history
-
-    def get_chroma_collection(self):
-        host_name = _config.VECTORDATABASE_HOSTNAME
-        port = _config.VECTORDATABASE_PORT
-        collection_name = _config.EMBEDDING_COLLECTION
-        persist_directory = _config.VECTORDATABASE_PERSIST_DIRECTORY
-
-        settings = Settings(
-            allow_reset=True,
-            anonymized_telemetry=True,
-            persist_directory=persist_directory,
+        self.intention_handler = IntentionHandler(
+            llm_model=config.LLM_MODEL_NAME, memory=self.memory, verbose=verbose
         )
-        chroma_client = chromadb.HttpClient(
-            host=host_name, port=port, settings=settings
-        )
-
-        return chroma_client.get_collection(
-            collection_name, embedding_function=self.embedder
-        )
-
-    def predict(
-        self, collection, query, n_neighbors: int = 1000, n_results: int = 10, **kwargs
-    ):
-        def f(key, value, k):
-            def limit(x):
-                if isinstance(x, list):
-                    return x[:k]
-                return x
-
-            if isinstance(value, list):
-                return (key, [limit(x) for x in value])
-            return (key, None)
-
-        res = collection.query(
-            query_texts=query,
-            n_results=n_neighbors,
-            **kwargs
-            # where={"metadata_field": "is_equal_to_this"},
-            # where_document={"$contains":"search_string"}
-        )
-
-        return dict([f(key, value, n_results) for key, value in res.items()])
-
-    def _set_local_context(self, content, meta):
-        return (
-            f"<data>{meta.get('date', '')}</data>\n"
-            f"<titulo>{meta.get('title', '')}</titulo>\n"
-            f"<autor>{meta.get('author', '')}</autor>\n"
-            f"<link>{meta.get('link', '')}</link>\n"
-            f"<conteudo>{content}</conteudo>\n"
-        )
-
-    def count_tokens(self, context: str) -> int:
-        encoding = tiktoken.encoding_for_model(_config.LLM_MODEL_NAME)
-        num_tokens = len(encoding.encode(context))
-
-        return num_tokens
-
-    def _set_query_content(self, documents, metadata):
-        context_list = [
-            self._set_local_context(content, meta)
-            for content, meta in zip(documents, metadata)
-        ]
-
-        tokens = LLM_CONTEXT_WINDOW_SIZE
-        max_tokens = PROMPT_MAX_TOKENS
-        while tokens > max_tokens:
-            tokens = self.count_tokens("\n".join(context_list))
-            if tokens >= max_tokens:
-                context_list.pop()
-
-        return "\n".join(sorted(context_list))
-
-    def get_content(self, query, n_results=10, n_neighbors=1000):
-        result = self.predict(
-            self.collection,
-            query,
-            n_results=n_results,
-            n_neighbors=n_neighbors,
-        )
-
-        return self._set_query_content(result["documents"][0], result["metadatas"][0])
-
-    def format_history_message(
-        self, messages, human_prefix: str = "Human", ai_prefix: str = "AI"
-    ):
-        for message in messages:
-            if isinstance(message, langchain_core.messages.human.HumanMessage):
-                yield f"{human_prefix}: {message.content}\n"
-
-            elif isinstance(message, langchain_core.messages.ai.AIMessage):
-                yield f"{ai_prefix}: {message.content}\n"
-
-    def get_standalone_question(self, message: str, history: str, *args, **kwargs) -> str:
-        self.chain_standalone_question = LLMChain(
-            llm=self.llm,
-            prompt=self.prompt_standalone_question,
-            verbose=self.verbose_chains,
-        )
-
-        result = self.chain_standalone_question.predict(
-            history=history, human_input=message
-        )
-
-        return result
-
-    def get_user_intention(self, message: str, history: str, *args, **kwargs) -> str:
-        self.chain_intention = LLMChain(
-            llm=self.llm, prompt=self.prompt_intention, verbose=self.verbose_chains
-        )
-
-        return self.chain_intention.predict(history=history, human_input=message)
-
-    def handler_start_conversation(self, message: str, history: str, *args, **kwargs) -> str:
-        self.chain_greeting = LLMChain(
-            llm=self.llm_chat,
-            prompt=self.prompt_greeting,
-            verbose=self.verbose_chains,
+        self.query_handler = QueryHandler(
+            llm_model=config.LLM_MODEL_NAME,
             memory=self.memory,
+            vector_database=self.vdb,
+            verbose=verbose,
         )
-
-        result = self.chain_greeting.predict(history=history, human_input=message)
-
-        self.local_memory.update(message_history=self.memory.chat_memory)
-        return result
-
-    def handler_query(self, message: str, history: str, *args, **kwargs) -> str:
-        self.chain_query = LLMChain(
-            llm=self.llm_chat,
-            prompt=self.prompt_query,
-            verbose=self.verbose_chains,
+        self.greeting_handler = GreetingHandler(
+            llm_model=config.LLM_MODEL_NAME,
             memory=self.memory,
+            vector_database=self.vdb,
+            verbose=verbose,
         )
-
-        context = self.get_content(query=message)
-
-        for i in range(3):
-            response = self.chain_query.predict(
-                history=history, human_input=message, context=context
-            )
-            self.local_memory.update(message_history=self.memory.chat_memory)
-            resp_dict = extract_dict_from_string(response)
-            if len(resp_dict) > 0:
-                _resposta = f'{resp_dict.get("resposta", "")}'
-                _link = (
-                    f'\n\nlink da noticia: {resp_dict.get("link", "")}'
-                    if resp_dict.get("link", None)
-                    else ""
-                )
-                return _resposta + _link
-            continue
-
-        return response
-
-    def handler_fallback(self, *args, **kwargs) -> str:
-        return (
-            "Desculpe, mas não posso responder a essa pergunta. "
-            "Algo em que possa ajudar sobre notícias de Poços de Caldas e região?"
-        )
+        self.fallback_handler = FallbackHandler()
 
     def execute(self, message: str):
-        chat_history = "".join(
-            self.format_history_message(self.memory.chat_memory.messages)
-        )
+        """
+        Execute the NewsBot to handle user input.
 
-        standalone_question = self.get_standalone_question(
-            message=message, history=chat_history
-        )
+        Args:
+            message (str): The user input message.
+
+        Returns:
+            dict: A dictionary containing the response and execution ID.
+        """
+        improved_message = self.standalone_handler.predict(message)
         logger.debug(f"Pergunta original: {message}")
-        logger.debug(f"Pergunta melhorada: {standalone_question}")
+        logger.debug(f"Pergunta melhorada: {improved_message}")
 
-        intention = self.get_user_intention(
-            message=standalone_question, history=chat_history
-        )
+        intention = self.intention_handler.predict(improved_message)
         logger.debug(f"Intenção: {intention}")
 
         handlers = {
-            "inicio de conversa": self.handler_start_conversation,
-            "consulta de conteudo": self.handler_query,
-            "": self.handler_fallback,
+            "inicio de conversa": self.greeting_handler,
+            "consulta de conteudo": self.query_handler,
+            "": self.fallback_handler,
         }
 
         response = None
         for category, handler in handlers.items():
             if category in intention.lower().replace("ú", "u").replace("í", "i"):
-                response = handler(
-                    message=message, memory=self.memory, history=chat_history
-                )
+                response = handler.predict(improved_message)
                 break
 
-        self.local_memory.update(message_history=self.memory.chat_memory)
-
         return dict(response=response, execution_id=uuid4().hex)
-
-
-def extract_dict_from_string(string):
-    """
-    Extrai um elemento JSON de uma string.
-
-    Args:
-    string: A string que contém o elemento JSON.
-
-    Returns:
-    O elemento JSON como um dicionário Python, ou None se não for possível extrair.
-    """
-
-    match = re.search(r"{([^}]+)}", string)
-    if match is None:
-        return dict()
-
-    json_content = match.group(1)
-
-    try:
-        json_dict = json.loads("{" + json_content + "}")
-        return json_dict
-    except json.JSONDecodeError as err:
-        logger.error(str(err))
-        return dict()
