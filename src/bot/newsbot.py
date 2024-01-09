@@ -45,27 +45,9 @@ class NewsBot:
             ai_prefix=config.AI_PREFIX,
         )
 
-        self.standalone_handler = StandaloneHandler(
-            llm_model=config.LLM_MODEL_NAME, memory=self.memory, verbose=verbose
-        )
-        self.intention_handler = IntentionHandler(
-            llm_model=config.LLM_MODEL_NAME, memory=self.memory, verbose=verbose
-        )
-        self.query_handler = QueryHandler(
-            llm_model=config.LLM_MODEL_NAME,
-            memory=self.memory,
-            vector_database=self.vdb,
-            verbose=verbose,
-        )
-        self.greeting_handler = GreetingHandler(
-            llm_model=config.LLM_MODEL_NAME,
-            memory=self.memory,
-            vector_database=self.vdb,
-            verbose=verbose,
-        )
-        self.fallback_handler = FallbackHandler()
+        self._set_handlers()
 
-    def execute(self, message: str):
+    def ask(self, message: str):
         """
         Execute the NewsBot to handle user input.
 
@@ -95,3 +77,37 @@ class NewsBot:
                 break
 
         return dict(response=response, execution_id=uuid4().hex)
+
+    def _set_handlers(self) -> None:
+        """
+        Initialize and set handlers for the NewsBot.
+
+        This method initializes various handlers such as StandaloneHandler, IntentionHandler,
+        QueryHandler, GreetingHandler, and FallbackHandler with specified configurations.
+
+        Returns:
+            None
+        """
+        self.standalone_handler = StandaloneHandler(
+            llm_model=config.LLM_MODEL_NAME,
+            memory=self.memory,
+            verbose=self.verbose,
+        )
+        self.intention_handler = IntentionHandler(
+            llm_model=config.LLM_MODEL_NAME,
+            memory=self.memory,
+            verbose=self.verbose,
+        )
+        self.query_handler = QueryHandler(
+            llm_model=config.LLM_MODEL_NAME,
+            memory=self.memory,
+            vector_database=self.vdb,
+            verbose=self.verbose,
+        )
+        self.greeting_handler = GreetingHandler(
+            llm_model=config.LLM_MODEL_NAME,
+            memory=self.memory,
+            vector_database=self.vdb,
+            verbose=self.verbose,
+        )
+        self.fallback_handler = FallbackHandler()
