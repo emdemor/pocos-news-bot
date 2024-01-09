@@ -1,4 +1,4 @@
-from bot.vector_databases._chroma import ChromaVectorDB
+from bot.vector_databases._chroma import NewsChromaVectorDB
 from bot.vector_databases.exceptions import VectorDatabaseNotRecognizedError
 
 __all__ = [
@@ -9,7 +9,7 @@ __all__ = [
 
 def get_vector_database(label: str):
     _vdbs_mapping = {
-        "chroma": ChromaVectorDB,
+        "chroma": NewsChromaVectorDB,
     }
 
     if label not in _vdbs_mapping:

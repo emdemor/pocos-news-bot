@@ -121,7 +121,7 @@ class ChromaVectorDB(VectorDB):
         return key, processed_value
 
 
-class NewsVectorDB(ChromaVectorDB):
+class NewsChromaVectorDB(ChromaVectorDB):
     """
     A class representing a vector database specifically designed for news documents.
     Inherits from ChromaVectorDB.
