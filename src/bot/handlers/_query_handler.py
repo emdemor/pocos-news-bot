@@ -6,6 +6,11 @@ from bot.vector_databases.base import VectorDB
 
 
 class QueryHandler(PublicHandler):
+    """
+    A class representing a query handler for processing user queries.
+    Inherits from PublicHandler.
+    """
+
     _prompt_key: str = "prompt_query"
     _use_chat_history: bool = True
     _use_context: bool = True
@@ -20,6 +25,18 @@ class QueryHandler(PublicHandler):
         llm_context_window_size: int = 4096,
         prompt_max_tokens: int = 3200,
     ):
+        """
+        Initialize the QueryHandler.
+
+        Args:
+            llm_model (str): The language model for processing queries.
+            memory (BaseChatMemory): The chat memory.
+            vector_database (VectorDB): The vector database for query processing.
+            temperature (float): The temperature for generating responses.
+            verbose (bool): Whether to enable verbose mode.
+            llm_context_window_size (int): The context window size for the language model.
+            prompt_max_tokens (int): The maximum tokens for a prompt.
+        """
         self._llm_model = llm_model
         self._memory = memory
         self._temperature = temperature
