@@ -12,12 +12,16 @@ from langchain_core.messages.ai import AIMessage
 from langchain.chains import LLMChain
 
 from bot import BotConfig
-from bot.data_models import News, VectorDatabaseNewsResult
+from bot.data_models import BaseVectorDatabaseResult
 
 config = BotConfig()
 
 
 class Handler(ABC):
+    """
+    Abstract base class for handling prompts and predictions.
+    """
+
     prompts_folder: str = "bot.prompts"
     human_prefix: str = config.HUMAN_PREFIX
     ai_prefix: str = config.AI_PREFIX
@@ -26,10 +30,28 @@ class Handler(ABC):
         pass
 
     def get_prompt(self, key: str) -> PromptTemplate:
+        """
+        Get a prompt template based on the provided key.
+
+        Args:
+            key (str): The key identifying the prompt template.
+
+        Returns:
+            PromptTemplate: The loaded prompt template.
+        """
         filepath = str(resources.files(self.prompts_folder).joinpath(f"{key}.json"))
         return load_prompt(filepath)
 
     def predict(self, message) -> str:
+        """
+        Generate a prediction based on the input message.
+
+        Args:
+            message (str): The input message.
+
+        Returns:
+            str: The generated prediction.
+        """
         params = {}
         if self.use_chat_history:
             params.update(dict(history=self.get_chat_history()))
@@ -104,11 +126,16 @@ class Handler(ABC):
         pass
 
     def get_chat_history(self) -> str:
-        _class = self.__class__
+        """
+        Get the formatted chat history.
 
-        if not hasattr(_class, "memory"):
+        Returns:
+            str: The formatted chat history.
+        """
+
+        if not hasattr(self.__class__, "memory"):
             raise AttributeError(
-                f"The class {_class.__name__} does not have the 'memory' attribute"
+                f"The class {self.__class__.__name__} does not have the 'memory' attribute"
             )
 
         if not self.use_chat_history:
@@ -118,12 +145,22 @@ class Handler(ABC):
 
         return "".join(self._format_history_message(self.memory.chat_memory.messages))
 
-    def get_context(self, query, n_results=10, n_neighbors=1000):
-        _class = self.__class__
+    def get_context(self, query, n_results: int = 10, n_neighbors: int = 1000):
+        """
+        Get context based on the provided query.
 
-        if not hasattr(_class, "vector_database"):
+        Args:
+            query (str): The query for generating context.
+            n_results (int): The number of results to retrieve.
+            n_neighbors (int): The number of neighbors to consider.
+
+        Returns:
+            str: The generated context.
+        """
+
+        if not hasattr(self.__class__, "vector_database"):
             raise AttributeError(
-                f"The class {_class.__name__} does not have the 'vector_database' attribute"
+                f"The class {self.__class__.__name__} does not have the 'vector_database' attribute"
             )
 
         if not self.use_context:
@@ -135,6 +172,15 @@ class Handler(ABC):
         return self._set_query_content(results)
 
     def _format_history_message(self, messages: List[HumanMessage | AIMessage]):
+        """
+        Format a list of messages into a readable format.
+
+        Args:
+            messages (List[HumanMessage | AIMessage]): The list of messages.
+
+        Returns:
+            List[str]: The formatted messages.
+        """
         for message in messages:
             if isinstance(message, HumanMessage):
                 yield f"{config.HUMAN_PREFIX}: {message.content}\n"
@@ -143,24 +189,30 @@ class Handler(ABC):
                 yield f"{config.AI_PREFIX}: {message.content}\n"
 
     def _count_tokens(self, context: str) -> int:
+        """
+        Count the number of tokens in the provided context.
+
+        Args:
+            context (str): The context to count tokens for.
+
+        Returns:
+            int: The number of tokens.
+        """
         encoding = tiktoken.encoding_for_model(self.llm_model)
         num_tokens = len(encoding.encode(context))
         return num_tokens
 
-    @staticmethod
-    def _format_news(news: News, order: int) -> str:
-        return (
-            f"\n<noticia_{order}>\n"
-            f"\t<data>{news.date}</data>\n"
-            f"\t<titulo>{news.title}</titulo>\n"
-            f"\t<autor>{news.author}</autor>\n"
-            f"\t<link>{news.link}</link>\n"
-            f"\t<conteudo>{news.document}</conteudo>\n"
-            f"</noticia_{order}>"
-        )
+    def _set_query_content(self, results: List[BaseVectorDatabaseResult]) -> str:
+        """
+        Set the content based on query results.
 
-    def _set_query_content(self, results: List[VectorDatabaseNewsResult]) -> str:
-        context_list = [self._format_news(res.news, i+1) for i, res in enumerate(results)]
+        Args:
+            results (List[BaseVectorDatabaseResult]): The query results.
+
+        Returns:
+            str: The set query content.
+        """
+        context_list = [res.doc.repr(i + 1) for i, res in enumerate(results)]
         tokens = self.llm_context_window_size
         max_tokens = self.prompt_max_tokens
         while tokens > max_tokens:
