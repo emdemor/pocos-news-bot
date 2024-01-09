@@ -6,6 +6,11 @@ from bot.vector_databases.base import VectorDB
 
 
 class IntentionHandler(PrivateHandler):
+    """
+    A class representing an intention handler for processing user intentions.
+    Inherits from PrivateHandler.
+    """
+
     _prompt_key: str = "prompt_user_intention"
     _use_chat_history: bool = True
     _use_context: bool = False
@@ -20,6 +25,16 @@ class IntentionHandler(PrivateHandler):
         temperature: float = 0,
         verbose: bool = True,
     ):
+        """
+        Initialize the IntentionHandler.
+
+        Args:
+            llm_model (str): The language model for processing intentions.
+            memory (BaseChatMemory): The chat memory.
+            temperature (float): The temperature for generating responses.
+            verbose (bool): Whether to enable verbose mode.
+        """
+
         self._llm_model = llm_model
         self._memory = memory
         self._temperature = temperature
