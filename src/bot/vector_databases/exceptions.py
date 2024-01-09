@@ -1,0 +1,2 @@
+class VectorDatabaseNotRecognizedError(Exception):
+    pass
